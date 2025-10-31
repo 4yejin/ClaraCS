@@ -61,41 +61,55 @@ class DashboardManager {
     
     async fetchDashboardData(userId) {
         try {
-            console.log('🔍 1단계: 최신 파일 ID 조회 중...');
+            console.log('🔍 1단계: 최신 파일/배치 조회 중...');
             
-            // 최신 파일 ID 가져오기
-            const fileResponse = await fetch('/api/upload/latest-file', {
+            // 최신 파일/배치 조회 (배치 우선)
+            const latestResponse = await fetch('/api/upload/latest-file', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: userId })
             });
             
-            console.log('파일 조회 응답 상태:', fileResponse.status);
+            console.log('파일/배치 조회 응답 상태:', latestResponse.status);
             
-            if (!fileResponse.ok) {
-                const errorData = await fileResponse.json();
-                console.warn('⚠️ 최신 파일 없음:', errorData.error);
+            if (!latestResponse.ok) {
+                const errorData = await latestResponse.json();
+                console.warn('⚠️ 최신 파일/배치 없음:', errorData.error);
                 return null;
             }
             
-            const fileResult = await fileResponse.json();
-            console.log('파일 조회 결과:', fileResult);
+            const latestResult = await latestResponse.json();
+            console.log('파일/배치 조회 결과:', latestResult);
             
-            const fileId = fileResult.data?.file_id;
+            const dataType = latestResult.data?.type; // 'batch' or 'file'
+            const fileId = latestResult.data?.file_id;
+            const batchId = latestResult.data?.batch_id;
             
-            if (!fileId) {
-                console.warn('⚠️ 파일 ID가 응답에 없습니다');
+            if (!fileId && !batchId) {
+                console.warn('⚠️ 파일 ID 또는 배치 ID가 응답에 없습니다');
                 return null;
             }
             
-            console.log(`✅ 최신 파일 ID: ${fileId}`);
+            if (dataType === 'batch') {
+                console.log(`✅ 최신 배치 ID: ${batchId}`);
+            } else {
+                console.log(`✅ 최신 파일 ID: ${fileId}`);
+            }
+            
             console.log('🔍 2단계: 자동 분류 통계 조회 중...');
             
-            // 자동 분류 데이터 조회 (KPI, TOP 3, 카테고리 비율)
+            // 자동 분류 데이터 조회 (배치 우선)
+            const statsRequestBody = {};
+            if (batchId) {
+                statsRequestBody.batch_id = batchId;
+            } else {
+                statsRequestBody.file_id = fileId;
+            }
+            
             const statsResponse = await fetch('/api/classifications/stats', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ file_id: fileId })
+                body: JSON.stringify(statsRequestBody)
             });
             
             console.log('통계 조회 응답 상태:', statsResponse.status);
