@@ -41,3 +41,6 @@ class Config:
     DL_MODEL_API_KEY = os.getenv('DL_MODEL_API_KEY', '')  # 외부 API 키 (필요시)
     DL_MODEL_USE_EXTERNAL = os.getenv('DL_MODEL_USE_EXTERNAL', 'False').lower() == 'true'  # 외부 API 사용 여부
     DL_MODEL_NAME = os.getenv('DL_MODEL_NAME', 'facebook/bart-large-mnli')  # Hugging Face 모델 이름 또는 외부 모델 ID
+    
+    # Google Sheets 연동 설정
+    GOOGLE_SHEETS_WEB_APP_URL = os.getenv('GOOGLE_SHEETS_WEB_APP_URL', '')  # Google Apps Script 배포 URL
