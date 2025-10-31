@@ -217,11 +217,14 @@ JSON 형식으로 응답해주세요:
             raise Exception("OpenAI API 키가 설정되지 않았습니다.")
         
         try:
-            logger.info(f"GPT 모델 호출: gpt-4o-mini (max_tokens={max_tokens})")
+            from config import Config
+            model_name = Config.OPENAI_MODEL
+            
+            logger.info(f"GPT 모델 호출: {model_name} (max_tokens={max_tokens})")
             logger.info(f"API 키 앞 10자: {self.api_key[:10]}... (총 길이: {len(self.api_key)})")
             
             response = openai.ChatCompletion.create(
-                model="gpt-4o-mini",  # gpt-3.5-turbo → gpt-4o-mini (더 빠르고 저렴)
+                model=model_name,
                 messages=[
                     {"role": "system", "content": "당신은 CS 데이터 분석 전문가입니다. 정확하고 실용적이며 매우 상세한 인사이트와 솔루션을 제공해주세요. 각 항목은 구체적이고 풍부한 내용으로 작성하세요."},
                     {"role": "user", "content": prompt}

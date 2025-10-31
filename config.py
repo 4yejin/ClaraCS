@@ -9,6 +9,7 @@ class Config:
     
     # OpenAI 설정
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+    OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')  # 사용할 GPT 모델
     
     # 데이터베이스 설정
     DB_HOST = os.getenv('DB_HOST', 'localhost')
