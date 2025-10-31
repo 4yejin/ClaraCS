@@ -1,2 +1,0 @@
-# ClaraCS
-지능형 CS 데이터 분석·인사이트 플랫폼 (INTELLIGENT CS DATA ANALYSIS &amp; INSIGHT PLATFORM)
