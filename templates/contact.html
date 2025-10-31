@@ -45,20 +45,21 @@
       <div class="contact-container">
           <h1>Contact with</h1>
           <p class="team-name">TEAM. CLARA</p>
-          <form class="contact-form">
+          <form class="contact-form" id="contactForm">
               <div class="form-group">
                   <label for="name">Name</label>
-                  <input type="text" id="name" name="name" placeholder="Value">
+                  <input type="text" id="name" name="name" placeholder="Value" required>
               </div>
               <div class="form-group">
                   <label for="email">Email</label>
-                  <input type="email" id="email" name="email" placeholder="Value">
+                  <input type="email" id="email" name="email" placeholder="Value" required>
               </div>
               <div class="form-group">
                   <label for="message">Message</label>
-                  <textarea id="message" name="message" rows="5" placeholder="Value"></textarea>
+                  <textarea id="message" name="message" rows="5" placeholder="Value" required></textarea>
               </div>
-              <button type="submit" class="submit-button">Submit</button>
+              <button type="submit" class="submit-button" id="submitBtn">Submit</button>
+              <div id="messageArea" style="margin-top: 15px; display: none;"></div>
           </form>
       </div>
   </section>
@@ -74,7 +75,7 @@
         <ul class="space-y-1">
         <li>Minhyeok Kang</li>
         <li>Jinyoung Kim</li>
-        <li>Yejin Kim</li>
+        <li>Yejin Han</li>
         <li>Hojae Kim</li>
         </ul>
     </div>
@@ -103,5 +104,85 @@
     
 
   </footer>
+
+  <script>
+    (function() {
+      const contactForm = document.getElementById('contactForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const messageArea = document.getElementById('messageArea');
+
+      contactForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const message = document.getElementById('message').value.trim();
+
+        if (!name || !email || !message) {
+          showMessage('모든 필드를 입력해주세요.', 'error');
+          return;
+        }
+
+        // 버튼 비활성화 및 로딩 상태
+        submitBtn.disabled = true;
+        submitBtn.textContent = '전송 중...';
+
+        try {
+          // Flask 백엔드로 요청 전송 (프록시를 통해 Google Sheets에 저장)
+          const response = await fetch('/api/contact/submit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              name: name,
+              email: email,
+              message: message
+            })
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            showMessage(result.message || '메시지가 성공적으로 전송되었습니다!', 'success');
+            contactForm.reset();
+          } else {
+            // 429 에러인 경우 특별한 메시지 표시
+            if (response.status === 429) {
+              showMessage(result.error || '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.', 'error');
+            } else {
+              throw new Error(result.error || `HTTP error! status: ${response.status}`);
+            }
+          }
+        } catch (error) {
+          console.error('Error submitting form:', error);
+          let errorMessage = error.message || '전송 중 오류가 발생했습니다. 다시 시도해주세요.';
+          
+          // 네트워크 오류인 경우
+          if (error.message.includes('fetch')) {
+            errorMessage = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+          }
+          
+          showMessage(errorMessage, 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit';
+        }
+      });
+
+      function showMessage(text, type) {
+        messageArea.style.display = 'block';
+        messageArea.style.color = type === 'success' ? '#4caf50' : '#ff6b6b';
+        messageArea.textContent = text;
+        
+        if (type === 'success') {
+          setTimeout(() => {
+            messageArea.style.display = 'none';
+          }, 5000);
+        }
+      }
+    })();
+  </script>
+
 </body>
 </html>

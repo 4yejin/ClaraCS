@@ -51,12 +51,19 @@ class AutoClassifyService:
             # 분류기 초기화 (사용자 선택에 따라 분기)
             # ============================================================
             if use_ai:
-                # AI 기반 분류기
-                logger.info("🤖 AI 기반 분류 엔진 사용 (Hugging Face)")
+                # AI 기반 분류기 (외부 API 또는 로컬 모델)
+                from config import Config
+                if Config.DL_MODEL_USE_EXTERNAL and Config.DL_MODEL_API_URL:
+                    logger.info(f"🤖 AI 기반 분류 엔진 사용 (외부 API: {Config.DL_MODEL_API_URL})")
+                else:
+                    logger.info("🤖 AI 기반 분류 엔진 사용 (로컬 Hugging Face 모델)")
+                
                 try:
                     self.classifier = AIClassifier(
-                        model_name='facebook/bart-large-mnli',  # 경량화 모델 (메모리 효율적)
-                        category_mapping=category_mapping
+                        model_name=Config.DL_MODEL_NAME,
+                        category_mapping=category_mapping,
+                        api_url=Config.DL_MODEL_API_URL if Config.DL_MODEL_USE_EXTERNAL else None,
+                        api_key=Config.DL_MODEL_API_KEY if Config.DL_MODEL_USE_EXTERNAL else None
                     )
                 except (ImportError, OSError) as e:
                     logger.error(f"AI 모델 로딩 실패: {e}")

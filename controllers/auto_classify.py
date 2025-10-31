@@ -82,28 +82,34 @@ def run():
 @auto_bp.route("/stats", methods=["POST"])
 def get_classification_stats():
     """
-    자동 분류 통계 조회 (대시보드용)
-    요청: { "file_id": int }
+    자동 분류 통계 조회 (대시보드용) - 배치 지원
+    요청: { "file_id": int (선택), "batch_id": int (선택) }
     응답: 처리 완료/미처리 건수, TOP 3 카테고리, 카테고리별 분포
     """
     try:
         body = request.get_json(silent=True) or {}
-        file_id = int(body.get("file_id", 0))
+        file_id = int(body.get("file_id", 0)) if body.get("file_id") else None
+        batch_id = int(body.get("batch_id", 0)) if body.get("batch_id") else None
         
-        if not file_id:
+        if not file_id and not batch_id:
             return jsonify({
                 'success': False,
-                'error': 'file_id가 필요합니다.'
+                'error': 'file_id 또는 batch_id가 필요합니다.'
             }), 400
         
-        logger.info(f"분류 통계 조회: file_id={file_id}")
+        logger.info(f"분류 통계 조회: file_id={file_id}, batch_id={batch_id}")
         
         report_db = ReportDB()
         
-        # 1. CS 데이터 조회
-        cs_data = report_db.get_cs_analysis_data(file_id)
+        # 1. CS 데이터 조회 (배치 우선)
+        if batch_id:
+            cs_data = report_db.get_cs_analysis_data_by_batch(batch_id)
+            logger.info(f"배치 {batch_id}의 통계 조회")
+        else:
+            cs_data = report_db.get_cs_analysis_data(file_id)
+            logger.info(f"파일 {file_id}의 통계 조회")
         
-        if not cs_data or cs_data['total_tickets'] == 0:
+        if not cs_data or cs_data.get('total_tickets', 0) == 0:
             return jsonify({
                 'success': False,
                 'error': '분류 데이터가 없습니다.'
@@ -111,11 +117,11 @@ def get_classification_stats():
         
         # 2. 통계 데이터 구성
         stats_data = {
-            'total_tickets': cs_data['total_tickets'],
+            'total_tickets': cs_data.get('total_tickets', 0),
             'total_resolved': cs_data.get('total_resolved', 0),
             'total_unresolved': cs_data.get('total_unresolved', 0),
-            'top_categories': cs_data['category_distribution'][:3],  # TOP 3
-            'category_distribution': cs_data['category_distribution']
+            'top_categories': cs_data.get('category_distribution', [])[:3],  # TOP 3
+            'category_distribution': cs_data.get('category_distribution', [])
         }
         
         # 3. 최신 리포트의 인사이트 조회 (있는 경우만)

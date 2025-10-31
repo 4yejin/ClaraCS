@@ -133,39 +133,56 @@ def validate_file():
 @upload_bp.route("/api/upload/latest-file", methods=["POST"])
 @swag_from({
     'tags': ['Upload'],
-    'description': '최신 업로드 파일 조회',
+    'description': '최신 업로드 파일/배치 조회 (배치 우선)',
     'responses': {
         200: {
-            'description': '최신 파일 조회 성공'
+            'description': '최신 파일/배치 조회 성공'
         }
     }
 })
 def get_latest_file():
-    """최신 업로드 파일 조회 API"""
+    """최신 업로드 파일/배치 조회 API - 배치 우선"""
     try:
         data = request.get_json() or {}
         user_id = data.get('user_id') or session.get('user_id') or Config.DEFAULT_USER_ID
         
-        logger.info(f"최신 파일 조회: user_id={user_id}")
+        logger.info(f"최신 파일/배치 조회: user_id={user_id}")
         
         report_db = ReportDB()
+        
+        # 1순위: 최신 배치 조회
+        batch_id = report_db.get_latest_batch_id(user_id)
+        
+        if batch_id:
+            logger.info(f"최신 배치 선택: batch_id={batch_id}")
+            return jsonify({
+                'success': True,
+                'data': {
+                    'batch_id': batch_id,
+                    'type': 'batch'
+                }
+            }), 200
+        
+        # 2순위: 배치가 없으면 최신 파일 조회
         file_id = report_db.get_latest_file_id(user_id)
         
-        if not file_id:
+        if file_id:
+            logger.info(f"최신 파일 선택: file_id={file_id}")
             return jsonify({
-                'success': False,
-                'error': '업로드된 파일이 없습니다.'
-            }), 404
+                'success': True,
+                'data': {
+                    'file_id': file_id,
+                    'type': 'file'
+                }
+            }), 200
         
         return jsonify({
-            'success': True,
-            'data': {
-                'file_id': file_id
-            }
-        }), 200
+            'success': False,
+            'error': '업로드된 파일이 없습니다.'
+        }), 404
         
     except Exception as e:
-        logger.error(f"최신 파일 조회 실패: {e}")
+        logger.error(f"최신 파일/배치 조회 실패: {e}")
         return jsonify({
             'success': False,
             'error': '파일 조회 중 오류가 발생했습니다.'

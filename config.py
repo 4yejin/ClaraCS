@@ -9,6 +9,7 @@ class Config:
     
     # OpenAI 설정
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+    OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')  # 사용할 GPT 모델
     
     # 데이터베이스 설정
     DB_HOST = os.getenv('DB_HOST', 'localhost')
@@ -35,3 +36,12 @@ class Config:
     SMTP_PORT = int(os.getenv('MAIL_PORT', 587))  # SMTP 포트
     SMTP_USER = os.getenv('EMAIL_ADDRESS')        # SMTP 로그인 사용자
     SMTP_PASSWORD = os.getenv('EMAIL_PASSWORD')  # SMTP 앱 비밀번호
+    
+    # 딥러닝 모델 API 설정 (외부 API 연동용)
+    DL_MODEL_API_URL = os.getenv('DL_MODEL_API_URL', '')  # 외부 딥러닝 모델 API URL
+    DL_MODEL_API_KEY = os.getenv('DL_MODEL_API_KEY', '')  # 외부 API 키 (필요시)
+    DL_MODEL_USE_EXTERNAL = os.getenv('DL_MODEL_USE_EXTERNAL', 'False').lower() == 'true'  # 외부 API 사용 여부
+    DL_MODEL_NAME = os.getenv('DL_MODEL_NAME', 'facebook/bart-large-mnli')  # Hugging Face 모델 이름 또는 외부 모델 ID
+    
+    # Google Sheets 연동 설정
+    GOOGLE_SHEETS_WEB_APP_URL = os.getenv('GOOGLE_SHEETS_WEB_APP_URL', '')  # Google Apps Script 배포 URL
