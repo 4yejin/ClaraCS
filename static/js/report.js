@@ -811,6 +811,45 @@ class ReportManager {
         // 공유 모달 생성
         const modal = document.createElement('div');
         modal.className = 'share-modal';
+        // modal.innerHTML = `
+        //     <div class="share-modal-content">
+        //         <div class="share-modal-header">
+        //             <h3>리포트 공유</h3>
+        //             <button class="share-modal-close">×</button>
+        //         </div>
+        //         <div class="share-modal-body">
+        //             <div class="share-option">
+        //                 <label>공유 링크 생성</label>
+        //                 <div class="share-link-container">
+        //                     <input type="text" id="share-link" readonly value="리포트 링크가 생성됩니다...">
+        //                     <button id="copy-link" class="btn small">복사</button>
+        //                 </div>
+        //             </div>
+                    
+        //             <div class="share-option">
+        //                 <label>이메일 공유</label>
+        //                 <div class="email-share">
+        //                     <input type="email" id="share-email" placeholder="이메일 주소를 입력하세요">
+        //                     <button id="send-email" class="btn small">전송</button>
+        //                 </div>
+        //             </div>
+                    
+        //             <div class="share-option">
+        //                 <label>공유 설정</label>
+        //                 <div class="share-settings">
+        //                     <label class="checkbox-label">
+        //                         <input type="checkbox" id="allow-download" checked>
+        //                         <span>PDF 다운로드 허용</span>
+        //                     </label>
+        //                     <label class="checkbox-label">
+        //                         <input type="checkbox" id="allow-edit">
+        //                         <span>편집 권한 부여</span>
+        //                     </label>
+        //                 </div>
+        //             </div>
+        //         </div>
+        //     </div>
+        // `;
         modal.innerHTML = `
             <div class="share-modal-content">
                 <div class="share-modal-header">
@@ -819,32 +858,10 @@ class ReportManager {
                 </div>
                 <div class="share-modal-body">
                     <div class="share-option">
-                        <label>공유 링크 생성</label>
-                        <div class="share-link-container">
-                            <input type="text" id="share-link" readonly value="리포트 링크가 생성됩니다...">
-                            <button id="copy-link" class="btn small">복사</button>
-                        </div>
-                    </div>
-                    
-                    <div class="share-option">
                         <label>이메일 공유</label>
                         <div class="email-share">
                             <input type="email" id="share-email" placeholder="이메일 주소를 입력하세요">
                             <button id="send-email" class="btn small">전송</button>
-                        </div>
-                    </div>
-                    
-                    <div class="share-option">
-                        <label>공유 설정</label>
-                        <div class="share-settings">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="allow-download" checked>
-                                <span>PDF 다운로드 허용</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="allow-edit">
-                                <span>편집 권한 부여</span>
-                            </label>
                         </div>
                     </div>
                 </div>
@@ -855,9 +872,6 @@ class ReportManager {
         
         // 모달 이벤트 바인딩
         this.bindShareModalEvents(modal);
-        
-        // 공유 링크 생성
-        this.generateShareLink();
     }
     
     bindShareModalEvents(modal) {
@@ -866,9 +880,11 @@ class ReportManager {
         const sendBtn = modal.querySelector('#send-email');
         
         // 모달 닫기
-        closeBtn.addEventListener('click', () => {
-            modal.remove();
-        });
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                modal.remove();
+            });
+        }
         
         // 배경 클릭으로 닫기
         modal.addEventListener('click', (e) => {
@@ -877,23 +893,56 @@ class ReportManager {
             }
         });
         
-        // 링크 복사
-        copyBtn.addEventListener('click', () => {
-            const linkInput = modal.querySelector('#share-link');
-            linkInput.select();
-            document.execCommand('copy');
-            this.showMessage('링크가 클립보드에 복사되었습니다.', 'success');
-        });
+        // 링크 복사 (있을 경우만)
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => {
+                const linkInput = modal.querySelector('#share-link');
+                if (linkInput) {
+                    linkInput.select();
+                    document.execCommand('copy');
+                    this.showMessage('링크가 클립보드에 복사되었습니다.', 'success');
+                }
+            });
+        }
         
-        // 이메일 전송
-        sendBtn.addEventListener('click', () => {
-            const email = modal.querySelector('#share-email').value;
-            if (!email) {
-                this.showMessage('이메일 주소를 입력해주세요.', 'warning');
-                return;
-            }
-            this.sendEmailShare(email);
-        });
+        // 이메일 전송 (있을 경우만)
+        if (sendBtn) {
+            sendBtn.addEventListener('click', () => {
+                const emailInput = modal.querySelector('#share-email');
+                if (!emailInput) return;
+                
+                const email = emailInput.value.trim();
+                if (!email) {
+                    this.showMessage('이메일 주소를 입력해주세요.', 'warning');
+                    return;
+                }
+                
+                // 이메일 형식 검증
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    this.showMessage('올바른 이메일 주소를 입력해주세요.', 'warning');
+                    return;
+                }
+                
+                // 리포트 공유 버튼 가져오기
+                const shareReportBtn = document.querySelector('#btn-share-report');
+                
+                // 팝업 닫기
+                modal.remove();
+                
+                // 리포트 공유 버튼 상태 변경 (진행 중 표시)
+                if (shareReportBtn) {
+                    shareReportBtn.disabled = true;
+                    const originalText = shareReportBtn.textContent;
+                    shareReportBtn.textContent = "전송 중...";
+                    
+                    this.sendEmailShare(email, shareReportBtn, originalText);
+                } else {
+                    // 버튼을 찾을 수 없으면 일반 전송
+                    this.sendEmailShare(email);
+                }
+            });
+        }
     }
     
     generateShareLink() {
@@ -905,16 +954,43 @@ class ReportManager {
         }
     }
     
-    sendEmailShare(email) {
-        // 이메일 공유 기능 (실제 구현에서는 서버 API 호출)
-        console.log(`이메일 공유: ${email}`);
-        this.showMessage(`리포트가 ${email}로 전송되었습니다.`, 'success');
-        
-        // 모달 닫기
-        const modal = document.querySelector('.share-modal');
-        if (modal) {
-            modal.remove();
+    sendEmailShare(email, shareReportBtn = null, originalText = null) {
+        // 이메일 공유 기능 - 실제 이메일 전송 구현
+        if (!this.currentReportId) {
+            this.showMessage('리포트 ID가 없습니다. 먼저 리포트를 생성해주세요.', 'warning');
+            // 버튼 복원
+            if (shareReportBtn && originalText) {
+                shareReportBtn.disabled = false;
+                shareReportBtn.textContent = originalText;
+            }
+            return;
         }
+        
+        // 이메일 전송 API 호출
+        fetch("/send-pdf-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ report_id: this.currentReportId, email: email })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                this.showMessage(`PDF가 ${email}로 전송되었습니다.`, 'success');
+            } else {
+                this.showMessage(result.error || "PDF 전송에 실패했습니다.", "error");
+            }
+        })
+        .catch(err => {
+            console.error("PDF 이메일 전송 오류:", err);
+            this.showMessage("PDF 전송 중 오류가 발생했습니다.", "error");
+        })
+        .finally(() => {
+            // 리포트 공유 버튼 복원
+            if (shareReportBtn && originalText) {
+                shareReportBtn.disabled = false;
+                shareReportBtn.textContent = originalText;
+            }
+        });
     }
 
     showTemplateSelector() {

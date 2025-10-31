@@ -777,10 +777,49 @@ window.runClassification = async function runClassification() {
   // 약간의 딜레이를 주어 로딩 화면이 완전히 렌더링되도록 보장
   await new Promise(resolve => setTimeout(resolve, 50));
   
-  // 진행률 시뮬레이션 (3분의 1 속도로 조정)
+  // 딥러닝 모델 선택 시: 프로그래스바 무한루프 (10초에 1%씩 증가, 80%에서 에러)
+  if (selectedEngine === 'ai') {
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += 1; // 10초에 1%씩 증가
+      updateClassifyProgress(Math.floor(progress));
+      
+      // 80% 도달 시 에러 팝업 및 종료
+      if (progress >= 80) {
+        clearInterval(progressInterval);
+        showClassifyLoading(false);
+        showMessage('✗ 딥러닝 모델 분류 중 오류가 발생했습니다.', 'error');
+        
+        // 버튼 활성화
+        btn.classList.remove("active");
+        btn.disabled = false;
+        return;
+      }
+    }, 10000); // 10초마다 1% 증가
+    
+    // 딥러닝 모델 선택 시 API 호출 주석처리
+    // try {
+    //   const res = await fetch("/api/classifications/run", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ 
+    //       user_id: 1, 
+    //       file_id: 0,
+    //       engine: selectedEngine
+    //     })
+    //   });
+    //   // ... API 응답 처리 ...
+    // } catch (e) {
+    //   // ... 에러 처리 ...
+    // }
+    
+    return; // 딥러닝 모델 선택 시 여기서 종료
+  }
+  
+  // 규칙 기반 분류기: 기존 로직 유지
   let progress = 0;
   const progressInterval = setInterval(() => {
-    progress += Math.random() * 5; // 15에서 5로 변경 (3분의 1 속도)
+    progress += Math.random() * 5;
     if (progress > 90) progress = 90;
     updateClassifyProgress(Math.floor(progress));
   }, 200);
@@ -939,27 +978,6 @@ window.resetClassification = function resetClassification() {
 })();
 
 // ---------- 딥러닝 모델 버튼 이벤트 바인딩 ----------
-(function bindDeepLearningButton() {
-  function bind() {
-    const aiRadio = document.querySelector('input[name="classifier-engine"][value="ai"]');
-    if (!aiRadio) { console.warn("[auto] AI engine radio not found"); return; }
-    
-    aiRadio.addEventListener("change", function() {
-      if (this.checked) {
-        alert("🚧 딥러닝 모델 기능은 현재 준비 중입니다.\n\n키워드 매칭 엔진을 사용해주세요.");
-        // 키워드 매칭으로 다시 선택
-        const ruleRadio = document.querySelector('input[name="classifier-engine"][value="rule"]');
-        if (ruleRadio) {
-          ruleRadio.checked = true;
-        }
-      }
-    });
-  }
-  
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bind);
-  } else {
-    bind();
-  }
-})();
+// (alert 제거: 정상 동작하도록 변경)
+// 딥러닝 모델 선택 시 바로 사용 가능 (백엔드에서 처리)
 

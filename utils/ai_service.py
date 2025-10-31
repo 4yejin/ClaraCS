@@ -107,7 +107,7 @@ class AIService:
             import time
             start_time = time.time()
             
-            response = self._call_openai_api(prompt, max_tokens=4000)
+            response = self._call_openai_api(prompt, max_tokens=7000)
             
             elapsed = time.time() - start_time
             logger.info(f"✅ GPT API 응답 완료 (소요 시간: {elapsed:.2f}초)")
@@ -211,7 +211,7 @@ JSON 형식으로 응답해주세요:
 """
         return prompt
     
-    def _call_openai_api(self, prompt: str, max_tokens: int = 2000) -> str:
+    def _call_openai_api(self, prompt: str, max_tokens: int = 7000) -> str:
         """OpenAI API 호출"""
         if not self.api_key:
             raise Exception("OpenAI API 키가 설정되지 않았습니다.")

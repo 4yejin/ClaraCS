@@ -35,3 +35,9 @@ class Config:
     SMTP_PORT = int(os.getenv('MAIL_PORT', 587))  # SMTP 포트
     SMTP_USER = os.getenv('EMAIL_ADDRESS')        # SMTP 로그인 사용자
     SMTP_PASSWORD = os.getenv('EMAIL_PASSWORD')  # SMTP 앱 비밀번호
+    
+    # 딥러닝 모델 API 설정 (외부 API 연동용)
+    DL_MODEL_API_URL = os.getenv('DL_MODEL_API_URL', '')  # 외부 딥러닝 모델 API URL
+    DL_MODEL_API_KEY = os.getenv('DL_MODEL_API_KEY', '')  # 외부 API 키 (필요시)
+    DL_MODEL_USE_EXTERNAL = os.getenv('DL_MODEL_USE_EXTERNAL', 'False').lower() == 'true'  # 외부 API 사용 여부
+    DL_MODEL_NAME = os.getenv('DL_MODEL_NAME', 'facebook/bart-large-mnli')  # Hugging Face 모델 이름 또는 외부 모델 ID
